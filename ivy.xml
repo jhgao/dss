@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- list all the project dependencies here -->
+<ivy-module version="2.0">
+	<info organisation="sg.edu.sutd" module="dss" />
+	<dependencies>
+		<dependency org="commons-lang" name="commons-lang" rev="2.6" />
+		<dependency org="commons-cli" name="commons-cli" rev="1.2" />
+	</dependencies>
+</ivy-module>
