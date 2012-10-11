@@ -4,13 +4,25 @@
 	<property name="src.dir" location="src" />
 	<property name="build.dir" location="build" />
 	<property name="dist.dir" location="dist" />
+	<property name="lib.dir" location="lib" />
+	<property name="bin.dir" location="bin" />
+
+	<path id="project.classpath">
+		<fileset dir="${lib.dir}">
+			<patternset id="lib.pattern.only.jar">
+				<include name="**/*.jar" />
+				<exclude name="**/*javadoc*" />
+				<exclude name="**/*sources*" />
+			</patternset>
+		</fileset>
+	</path>
 
 	<!-- set ivy properties -->
 	<property name="ivy.install.version" value="2.3.0-rc1" />
 	<property name="ivy.jar.dir" value="${basedir}/ivy" />
 	<property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
 
-	<target name="init">
+	<target name="init" depends="ivy-retrieve">
 		<!-- Create the time stamp -->
 		<tstamp />
 		<!-- Create the build directory structure used by compile -->
@@ -19,15 +31,22 @@
 
 	<target name="compile" depends="init" description="compile the source ">
 		<!-- Compile the java code from ${src.dir} into ${build.dir} -->
-		<javac srcdir="${src.dir}" destdir="${build.dir}" />
+		<javac srcdir="${src.dir}" destdir="${build.dir}">
+			<classpath refid="project.classpath" />
+		</javac>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">
+		<!-- this task still need improve to support runnable jar -->
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist.dir}/lib" />
 
 		<!-- Put everything in ${build.dir} into the dss-${DSTAMP}.jar file -->
-		<jar jarfile="${dist.dir}/lib/dss-${DSTAMP}.jar" basedir="${build.dir}" />
+		<jar jarfile="${dist.dir}/lib/dss-${DSTAMP}-${TSTAMP}.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="sg.edu.sutd.dss.client.Client" />
+			</manifest>
+		</jar>
 	</target>
 
 	<target name="clean" description="clean up">
