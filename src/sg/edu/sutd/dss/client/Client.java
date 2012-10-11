@@ -24,6 +24,8 @@ public class Client {
 
 			if (cmd.hasOption("s")) {
 				System.out.println("has options store with tgt = " + cmd.getOptionValue("s"));
+				StoreThread st = new StoreThread();
+				st.run();
 			} else {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp("client", opts);
