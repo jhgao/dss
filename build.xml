@@ -5,17 +5,34 @@
 	<property name="build.dir" location="build" />
 	<property name="dist.dir" location="dist" />
 	<property name="lib.dir" location="lib" />
-	<property name="bin.dir" location="bin" />
+	
+	<patternset id="pattern.only.jar">
+		<include name="**/*.jar" />
+		<exclude name="**/*javadoc*" />
+		<exclude name="**/*sources*" />
+	</patternset>
 
 	<path id="project.classpath">
 		<fileset dir="${lib.dir}">
-			<patternset id="lib.pattern.only.jar">
-				<include name="**/*.jar" />
-				<exclude name="**/*javadoc*" />
-				<exclude name="**/*sources*" />
-			</patternset>
+			<patternset refid="pattern.only.jar" />
 		</fileset>
 	</path>
+
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}">
+		<patternset refid="pattern.only.jar" />
+		</fileset>
+	</path>
+
+	<pathconvert property="mf.classpath" pathsep=" " refid="build.classpath">
+		<mapper>
+				<!--ANT 1.7 is required -->
+                <chainedmapper>
+                        <flattenmapper/>
+                        <globmapper from="*.jar" to="*.jar"/>
+                </chainedmapper>
+        </mapper>
+	</pathconvert>
 
 	<!-- set ivy properties -->
 	<property name="ivy.install.version" value="2.3.0-rc1" />
@@ -35,18 +52,34 @@
 			<classpath refid="project.classpath" />
 		</javac>
 	</target>
+	
+	<target name="create_run_jar_client" depends="compile" description="generate the runnable client jar file with lib embedded">
+		<!--ANT 1.7 is required-->
+		<mkdir dir="${dist.dir}/lib" />
+		<jar destfile="${dist.dir}/lib/dssclient-${DSTAMP}-${TSTAMP}.jar">
+			<manifest>
+				<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
+				<attribute name="Rsrc-Main-Class" value="sg.edu.sutd.dss.client.Client" />
+				<attribute name="Class-Path" value="." />
+				<attribute name="Rsrc-Class-Path" value="./ ${mf.classpath}" />
+			</manifest>
+			<fileset dir="${build.dir}" />
+			<!--
+				jar-in-jar-loader.zip can be got by Eclipse menu: File> Export... > Java/Runnable jar file
+				Need to be improved.
+			-->
+			<zipfileset src="${lib.dir}/jar-in-jar-loader.zip" />
+			<zipfileset dir="${lib.dir}">
+				<patternset refid="pattern.only.jar" />
+			</zipfileset>
+		</jar>
+	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
-		<!-- this task still need improve to support runnable jar -->
+	<target name="dist" depends="compile" description="pack compiled file into a jar">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist.dir}/lib" />
-
-		<!-- Put everything in ${build.dir} into the dss-${DSTAMP}.jar file -->
-		<jar jarfile="${dist.dir}/lib/dss-${DSTAMP}-${TSTAMP}.jar" basedir="${build.dir}">
-			<manifest>
-				<attribute name="Main-Class" value="sg.edu.sutd.dss.client.Client" />
-			</manifest>
-		</jar>
+		<!-- Put everything in ${build.dir} into the dss-${DSTAMP}-${TSTAMP}.jar file -->
+		<jar jarfile="${dist.dir}/lib/dss-${DSTAMP}-${TSTAMP}.jar" basedir="${build.dir}" />
 	</target>
 
 	<target name="clean" description="clean up">
