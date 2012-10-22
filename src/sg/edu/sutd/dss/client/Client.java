@@ -7,6 +7,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
+import sg.edu.sutd.dss.data.UserFile;
+
 public class Client {
 
 	public static void main(String[] args) {
@@ -23,8 +25,9 @@ public class Client {
 			cmd = parser.parse(opts, args);
 
 			if (cmd.hasOption("s")) {
-				System.out.println("has options store with tgt = " + cmd.getOptionValue("s"));
-				StoreThread st = new StoreThread();
+				String fn = cmd.getOptionValue("s");
+				System.out.println("has options store with tgt = " + fn);
+				StoreThread st = new StoreThread(new UserFile(fn));
 				st.run();
 			} else {
 				HelpFormatter formatter = new HelpFormatter();
@@ -32,7 +35,7 @@ public class Client {
 			}
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
-			System.err.println("Parsing failed.  Reason: " + e.getMessage());
+			System.err.println("Parsing command failed.  Reason: " + e.getMessage());
 		}
 	}
 }

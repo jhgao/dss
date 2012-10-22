@@ -1,16 +1,26 @@
 package sg.edu.sutd.dss.client;
 
+import java.util.logging.Logger;
+
+import sg.edu.sutd.dss.data.UserFile;
+
+/**
+ * divide one UserFile, encoding RawBlocks, send EncodedBlocks to storage node
+ * @author theme
+ *
+ */
 public class StoreThread implements Runnable {
-	String testString;
-	
-	public StoreThread(){
-		System.out.println("StoreThread object created.");
-		System.out.println("testString = " + testString);
+	private static Logger LOG;
+	private UserFile userFile;
+
+	public StoreThread( UserFile infile ) {
+		LOG = Logger.getLogger(this.getClass().getName());
+		userFile = infile;
 	}
+
 	@Override
 	public void run() {
-		testString = "testString assigned inside run()";
-		System.out.println(testString);
+		LOG.info("StoreThread run to store file " + userFile.getAbsolutePath());
 	}
 
 }
