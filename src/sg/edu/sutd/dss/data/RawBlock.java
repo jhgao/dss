@@ -1,5 +1,5 @@
 package sg.edu.sutd.dss.data;
 
-public class DataBlockSet {
+public class RawBlock {
 
 }
