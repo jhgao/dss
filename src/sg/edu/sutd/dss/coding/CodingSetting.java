@@ -1,6 +1,11 @@
 package sg.edu.sutd.dss.coding;
 
 
+/**
+ * Singleton class as coding setting
+ * @author theme
+ *
+ */
 public class CodingSetting {
 	private static CodingSetting instance;
 	private Code currentCode;

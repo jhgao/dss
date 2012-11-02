@@ -5,7 +5,7 @@
 	<property name="build.dir" location="build" />
 	<property name="dist.dir" location="dist" />
 	<property name="lib.dir" location="lib" />
-	
+
 	<patternset id="pattern.only.jar">
 		<include name="**/*.jar" />
 		<exclude name="**/*javadoc*" />
@@ -20,18 +20,18 @@
 
 	<path id="build.classpath">
 		<fileset dir="${lib.dir}">
-		<patternset refid="pattern.only.jar" />
+			<patternset refid="pattern.only.jar" />
 		</fileset>
 	</path>
 
 	<pathconvert property="mf.classpath" pathsep=" " refid="build.classpath">
 		<mapper>
-				<!--ANT 1.7 is required -->
-                <chainedmapper>
-                        <flattenmapper/>
-                        <globmapper from="*.jar" to="*.jar"/>
-                </chainedmapper>
-        </mapper>
+			<!--ANT 1.7 is required -->
+			<chainedmapper>
+				<flattenmapper />
+				<globmapper from="*.jar" to="*.jar" />
+			</chainedmapper>
+		</mapper>
 	</pathconvert>
 
 	<!-- set ivy properties -->
@@ -52,8 +52,8 @@
 			<classpath refid="project.classpath" />
 		</javac>
 	</target>
-	
-	<target name="create_run_jar_client" depends="compile" description="generate the runnable client jar file with lib embedded">
+
+	<target name="create_run_jar_client" depends="deleteOldUnderDist,compile" description="generate the runnable client jar file with lib embedded">
 		<!--ANT 1.7 is required-->
 		<mkdir dir="${dist.dir}/lib" />
 		<jar destfile="${dist.dir}/lib/dssclient-${DSTAMP}-${TSTAMP}.jar">
@@ -87,6 +87,14 @@
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
 	</target>
+
+	<target name="deleteOldUnderDist" description="Delete the old build files and logs">
+		<!-- Delete the old build files and logs under ${dist.dir} directory -->
+		<delete>
+			<fileset dir="${dist.dir}" includes="**/*.log.*" />
+			<fileset dir="${dist.dir}" includes="**/*.jar" />
+		</delete>
+	</target>
 	<!--
 		========================= tgt : ivy-download ==========================
 		-->
@@ -99,7 +107,7 @@
 		<get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true" />
 	</target>
 	<!--
-		================================= target: ivy-install
+		================================= target: ivy-install ==========================
 		this target is not necessary if you put ivy.jar in your ant lib directory if you already have ivy in your ant lib, you can simply remove this target and the dependency =================================
 		-->
 	<target name="ivy-install" depends="ivy-download" description="--> install ivy">

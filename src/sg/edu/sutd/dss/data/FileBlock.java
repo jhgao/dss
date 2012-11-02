@@ -9,7 +9,7 @@ package sg.edu.sutd.dss.data;
  */
 public class FileBlock implements Comparable<FileBlock> {
 
-	UserFile srcFile; // source file
+	UserFile srcFile; // source File reference
 	private long sn; // serial number within one user file
 	private long offset; // offset in source file
 	private long length;

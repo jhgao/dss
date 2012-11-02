@@ -1,9 +1,13 @@
 package sg.edu.sutd.dss.coding;
 
 public abstract class Code {
-	protected int fileBlockLength = 1024; 	//Byte, a file block length
+	public abstract int getK();
 
-	public int getFileBlockLength() {
-		return fileBlockLength;
-	}
+	public abstract int getN();
+
+	public abstract int getFileBlockSize();
+
+	public abstract int getRawBlockSize();
+
+	public abstract int getEncodedBlockSize();
 }
