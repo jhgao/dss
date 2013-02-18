@@ -2,6 +2,7 @@ package sg.edu.sutd.dss.client;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.*;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.logging.FileHandler;
@@ -16,6 +17,7 @@ import sg.edu.sutd.dss.data.EncodedBlock;
 import sg.edu.sutd.dss.data.FileBlock;
 import sg.edu.sutd.dss.data.RawBlock;
 import sg.edu.sutd.dss.data.UserFile;
+import sg.edu.sutd.dss.protocol.cmd.CmdProtocol.Cmd;
 
 /**
  * divide <code>UserFile</code>, encoding <code>RawBlock</code>s, and populate
@@ -30,8 +32,11 @@ public class StoreThread implements Runnable {
 
 	private Code code;
 	private Encoder encoder;
+	
+	private String snodeAddr;
+	private Integer snodePort;
 
-	public StoreThread(UserFile infile) {
+	public StoreThread(UserFile infile, String aAddr, Integer aPort) {
 		try {
 			LOG = Logger.getLogger(this.getClass().getName());
 			Handler h = new FileHandler("StoreThread.log", 0, 25480);
@@ -49,6 +54,8 @@ public class StoreThread implements Runnable {
 		code = CodingSetting.getInstance().getCurrentCode();
 		encoder = new Encoder(new Simple()); // use a Code to initialize a
 												// Encoder
+		snodeAddr = aAddr;
+		snodePort = aPort;
 	}
 
 	@Override
@@ -86,6 +93,26 @@ public class StoreThread implements Runnable {
 				ensbuf.append(Encoder.bytesToHex(eb.getDataArray()) + "\n");
 			}
 			LOG.info("Got EncodedBlock:\n" + ensbuf.toString());
+			
+			try {
+				Socket cmdskt = new Socket(snodeAddr,snodePort);
+				//write out store request
+				Cmd.Builder req = Cmd.newBuilder();
+				req.setName("REQ_save_file");
+				req.setId(0);
+				req.setType(Cmd.CmdType.STORAGE);
+				req.setDbgString("[REQ] save file request");
+				
+				req.build().writeTo(cmdskt.getOutputStream());
+				
+				
+			} catch (UnknownHostException e) {
+				LOG.severe("Unknown host:" + snodeAddr);
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 

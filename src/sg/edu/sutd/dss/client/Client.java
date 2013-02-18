@@ -12,22 +12,28 @@ import sg.edu.sutd.dss.data.UserFile;
 public class Client {
 
 	public static void main(String[] args) {
-		parseCmd(args);
+		parseMainArg(args);
 	}
 
-	private static void parseCmd(String[] args) {
+	private static void parseMainArg(String[] args) {
 		Options opts = new Options();
 		opts.addOption("s", "storefile", true, "store a local file into dss");
+		opts.addOption("a", "snodeaddr", true, "storage node address");
+		opts.addOption("p", "snodeport", true, "storage node port");
 
 		CommandLineParser parser = new PosixParser();
 		CommandLine cmd;
 		try {
 			cmd = parser.parse(opts, args);
 
-			if (cmd.hasOption("s")) {
+			if (cmd.hasOption("s") && cmd.hasOption("a") && cmd.hasOption("p")) {
+				// save a file to a storage node				
 				String fn = cmd.getOptionValue("s");
-				System.out.println("has options store with tgt = " + fn);
-				StoreThread st = new StoreThread(new UserFile(fn));
+				String addr = cmd.getOptionValue("a");
+				Integer port = Integer.parseInt(cmd.getOptionValue("p"));
+				System.out.println("store a file" + fn);
+
+				StoreThread st = new StoreThread(new UserFile(fn),addr,port);
 				st.run();
 			} else {
 				HelpFormatter formatter = new HelpFormatter();
@@ -35,7 +41,8 @@ public class Client {
 			}
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
-			System.err.println("Parsing command failed.  Reason: " + e.getMessage());
+			System.err.println("Parsing command failed.  Reason: "
+					+ e.getMessage());
 		}
 	}
 }
