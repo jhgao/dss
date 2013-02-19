@@ -2,7 +2,10 @@ package sg.edu.sutd.dss.client;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.*;
+import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.logging.FileHandler;
@@ -32,9 +35,14 @@ public class StoreThread implements Runnable {
 
 	private Code code;
 	private Encoder encoder;
-	
+
 	private String snodeAddr;
 	private Integer snodePort;
+
+	private Socket cmdskt = null;
+	private SocketChannel cmdsktchan = null;
+	private OutputStream cmdsktout = null;
+	private InputStream cmdsktin = null;
 
 	public StoreThread(UserFile infile, String aAddr, Integer aPort) {
 		try {
@@ -61,6 +69,19 @@ public class StoreThread implements Runnable {
 	@Override
 	public void run() {
 		LOG.info("StoreThread run to store file " + userFile.getAbsolutePath());
+
+		// connect socket
+		try {
+			cmdskt = new Socket(snodeAddr, snodePort);
+			cmdsktout = cmdskt.getOutputStream();
+			cmdsktin = cmdskt.getInputStream();
+		} catch (UnknownHostException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		// divide file
 		this.userFileBlockSet = encoder.divideUserFile(userFile);
@@ -93,26 +114,38 @@ public class StoreThread implements Runnable {
 				ensbuf.append(Encoder.bytesToHex(eb.getDataArray()) + "\n");
 			}
 			LOG.info("Got EncodedBlock:\n" + ensbuf.toString());
-			
+
 			try {
-				Socket cmdskt = new Socket(snodeAddr,snodePort);
-				//write out store request
+				// start sending out store request
 				Cmd.Builder req = Cmd.newBuilder();
 				req.setName("REQ_save_file");
 				req.setId(0);
 				req.setType(Cmd.CmdType.STORAGE);
 				req.setDbgString("[REQ] save file request");
-				
-				req.build().writeTo(cmdskt.getOutputStream());
-				
-				
-			} catch (UnknownHostException e) {
-				LOG.severe("Unknown host:" + snodeAddr);
-				e.printStackTrace();
+
+				req.build().writeDelimitedTo(cmdskt.getOutputStream());
+				cmdskt.getOutputStream().flush();
+
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			// read and process ACK
+			while (true) {
+				try {
+					Cmd ack = Cmd.parseDelimitedFrom(cmdsktin);
+					LOG.info("[ACK] " + ack.toString());
+					if (ack.getName().equals("Done")) {
+						LOG.info("server ACK: Done");
+						return; // quit run()
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					break;
+				}
+			}
+
 		}
 	}
 
