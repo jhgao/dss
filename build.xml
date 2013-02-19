@@ -4,6 +4,7 @@
 	<property name="src.dir" location="src" />
 	<property name="build.dir" location="build" />
 	<property name="dist.dir" location="dist" />
+	<property name="dist.lib.dir" location="dist/lib" />
 	<property name="lib.dir" location="lib" />
 
 	<patternset id="pattern.only.jar">
@@ -24,16 +25,6 @@
 		</fileset>
 	</path>
 
-	<pathconvert property="mf.classpath" pathsep=" " refid="build.classpath">
-		<mapper>
-			<!--ANT 1.7 is required -->
-			<chainedmapper>
-				<flattenmapper />
-				<globmapper from="*.jar" to="*.jar" />
-			</chainedmapper>
-		</mapper>
-	</pathconvert>
-
 	<!-- set ivy properties -->
 	<property name="ivy.install.version" value="2.3.0-rc1" />
 	<property name="ivy.jar.dir" value="${basedir}/ivy" />
@@ -53,10 +44,19 @@
 		</javac>
 	</target>
 
-	<target name="create_run_jar_client" depends="deleteOldUnderDist,compile" description="generate the runnable client jar file with lib embedded">
+	<target name="create_run_jar_client" depends="clear_dist,compile" description="generate the runnable client jar file with lib embedded">
 		<!--ANT 1.7 is required-->
-		<mkdir dir="${dist.dir}/lib" />
-		<jar destfile="${dist.dir}/lib/dssclient-${DSTAMP}-${TSTAMP}.jar">
+		<mkdir dir="${dist.lib.dir}" />
+		<pathconvert property="mf.classpath" pathsep=" " refid="build.classpath">
+			<mapper>
+				<!--ANT 1.7 is required -->
+				<chainedmapper>
+					<flattenmapper />
+					<globmapper from="*.jar" to="*.jar" />
+				</chainedmapper>
+			</mapper>
+		</pathconvert>
+		<jar destfile="${dist.lib.dir}/dssclient-${DSTAMP}-${TSTAMP}.jar">
 			<manifest>
 				<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
 				<attribute name="Rsrc-Main-Class" value="sg.edu.sutd.dss.client.Client" />
@@ -77,19 +77,20 @@
 
 	<target name="dist" depends="compile" description="pack compiled file into a jar">
 		<!-- Create the distribution directory -->
-		<mkdir dir="${dist.dir}/lib" />
+		<mkdir dir="${dist.lib.dir}" />
 		<!-- Put everything in ${build.dir} into the dss-${DSTAMP}-${TSTAMP}.jar file -->
-		<jar jarfile="${dist.dir}/lib/dss-${DSTAMP}-${TSTAMP}.jar" basedir="${build.dir}" />
+		<jar jarfile="${dist.lib.dir}/dss-${DSTAMP}-${TSTAMP}.jar" basedir="${build.dir}" />
 	</target>
 
-	<target name="clean" description="clean up">
+	<target name="clean" description="delete build/ dist/">
 		<!-- Delete the ${build.dir} and ${dist.dir} directory trees -->
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
 	</target>
 
-	<target name="deleteOldUnderDist" description="Delete the old build files and logs">
+	<target name="clear_dist" description="Delete the old build files and logs">
 		<!-- Delete the old build files and logs under ${dist.dir} directory -->
+		<mkdir dir="${dist.dir}" />
 		<delete>
 			<fileset dir="${dist.dir}" includes="**/*.log.*" />
 			<fileset dir="${dist.dir}" includes="**/*.jar" />
