@@ -2,10 +2,8 @@ package sg.edu.sutd.dss.client;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.*;
-import java.nio.channels.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.logging.FileHandler;
@@ -20,7 +18,8 @@ import sg.edu.sutd.dss.data.EncodedBlock;
 import sg.edu.sutd.dss.data.FileBlock;
 import sg.edu.sutd.dss.data.RawBlock;
 import sg.edu.sutd.dss.data.UserFile;
-import sg.edu.sutd.dss.protocol.cmd.CmdProtocol.Cmd;
+import sg.edu.sutd.dss.protocol.SnodeProtoc.StoreAck;
+import sg.edu.sutd.dss.protocol.SnodeProtoc.StoreRequest;
 
 /**
  * divide <code>UserFile</code>, encoding <code>RawBlock</code>s, and populate
@@ -40,9 +39,6 @@ public class StoreThread implements Runnable {
 	private Integer snodePort;
 
 	private Socket cmdskt = null;
-	private SocketChannel cmdsktchan = null;
-	private OutputStream cmdsktout = null;
-	private InputStream cmdsktin = null;
 
 	public StoreThread(UserFile infile, String aAddr, Integer aPort) {
 		try {
@@ -73,8 +69,6 @@ public class StoreThread implements Runnable {
 		// connect socket
 		try {
 			cmdskt = new Socket(snodeAddr, snodePort);
-			cmdsktout = cmdskt.getOutputStream();
-			cmdsktin = cmdskt.getInputStream();
 		} catch (UnknownHostException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -117,12 +111,17 @@ public class StoreThread implements Runnable {
 
 			try {
 				// start sending out store request
-				Cmd.Builder req = Cmd.newBuilder();
-				req.setName("REQ_save_file");
-				req.setId(0);
-				req.setType(Cmd.CmdType.STORAGE);
-				req.setDbgString("[REQ] save file request");
-
+				StoreRequest.Builder req = StoreRequest.newBuilder();
+				req.setUserId("testUser0x01")
+					.setEncBlockDesc(
+							req.getEncBlockDesc().toBuilder()
+								.setEncBlockId("eb01")
+								.setPath("/folderA")
+								.setSize(64*1024)
+								.build()
+							)
+					.setReqSn(0);
+				
 				req.build().writeDelimitedTo(cmdskt.getOutputStream());
 				cmdskt.getOutputStream().flush();
 
@@ -133,10 +132,10 @@ public class StoreThread implements Runnable {
 			// read and process ACK
 			while (true) {
 				try {
-					Cmd ack = Cmd.parseDelimitedFrom(cmdsktin);
+					StoreAck ack = StoreAck.parseDelimitedFrom(cmdskt.getInputStream());
 					LOG.info("[ACK] " + ack.toString());
-					if (ack.getName().equals("Done")) {
-						LOG.info("server ACK: Done");
+					if (ack.hasIsApproved() && ack.getIsApproved()) {
+						LOG.info("snode ACK: store req approved");
 						return; // quit run()
 					}
 				} catch (IOException e) {
