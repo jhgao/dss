@@ -1,7 +1,9 @@
 package sg.edu.sutd.dss.client;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Iterator;
@@ -136,7 +138,18 @@ public class StoreThread implements Runnable {
 					LOG.info("[ACK] " + ack.toString());
 					if (ack.hasIsApproved() && ack.getIsApproved()) {
 						LOG.info("snode ACK: store req approved");
-						return; // quit run()
+						FileInputStream in = new FileInputStream(userFile);
+						OutputStream out = cmdskt.getOutputStream();
+						
+						int count;
+						byte[] buffer = new byte[8192];
+						while ((count = in.read(buffer)) > 0)
+						{
+						  out.write(buffer, 0, count);
+						}
+						in.close();
+						out.close();
+						break;
 					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -144,7 +157,19 @@ public class StoreThread implements Runnable {
 					break;
 				}
 			}
-
+			while(!cmdskt.isClosed()){
+				try {
+					StoreAck ack = StoreAck.parseDelimitedFrom(cmdskt.getInputStream());
+					if (ack.hasIsDone() && ack.getIsDone()) {
+						LOG.info("snode ACK: save file done.");
+						cmdskt.close();
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			return;
 		}
 	}
 
